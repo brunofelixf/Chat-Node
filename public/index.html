@@ -1,0 +1,79 @@
+<html>
+  <head>
+    <title>Express</title>
+    <link rel="stylesheet" href="/stylesheets/style.css" />
+  </head>
+
+  <body>
+    <div>
+      Digite seu nome:
+    </div>
+    <input id="author" />
+    <div>
+      Mensagem:
+    </div>
+    <input id="message" />
+    <button id="enviar">
+      Enviar
+    </button>
+
+    <div class="chat"></div>
+
+    <script>
+      const messageInput = document.getElementById("message");
+      const btnEnviar = document.getElementById("enviar");
+      const authorInput = document.getElementById("author");
+
+      pollMessages();
+      loadAuthor();
+      function pollMessages() {
+        const chatDiv = document.querySelector(".chat");
+        setInterval(async () => {
+          const response = await (await fetch("/mensagem")).json();
+          chatDiv.innerHTML = "";
+          response.messages.forEach((message) => {
+            const messageDiv = document.createElement("div");
+            messageDiv.innerHTML = `
+              <div class="time">${new Date(
+                message.time
+              ).toLocaleTimeString()}</div>
+              <b>${message.author}:</b>
+               ${message.message}\n
+            `;
+            chatDiv.appendChild(messageDiv);
+          });
+        }, 1000);
+      }
+
+      btnEnviar.addEventListener("click", () => {
+        saveAuthor();
+        sendMessage();
+      });
+
+      function loadAuthor() {
+        authorInput.value = localStorage.getItem("author");
+      }
+
+      function saveAuthor() {
+        localStorage.setItem("author", authorInput.value);
+      }
+
+      function sendMessage() {
+        const bundle = {
+          message: messageInput.value,
+          author: authorInput.value,
+          time: new Date().getTime()
+        };
+
+        const headers = new Headers();
+        headers.append("Content-Type", "application/json");
+
+        fetch("/mensagem", {
+          method: "POST",
+          headers,
+          body: JSON.stringify(bundle)
+        });
+      }
+    </script>
+  </body>
+</html>
